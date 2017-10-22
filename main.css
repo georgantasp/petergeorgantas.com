@@ -37,21 +37,6 @@
   margin-top: -4%;
   max-width: 80%;
 }
-.wrapper-inner:before {
-  content: '';
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 337px;
-  height: 337px;
-  left: 50%;
-  top: 50%;
-  margin-left: -168px;
-  margin-top: -168px;
-  background-image: url(circle-red.png);
-  background-size: 100%;
-}
 
 /* Type
 ----------------------------- */
