@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  petergeorgantascomCert:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: petergeorgantas.com
+      DomainValidationOptions:
+      - DomainName: petergeorgantas.com
+        ValidationDomain: petergeorgantas.com
+      SubjectAlternativeNames:
+      - www.petergeorgantas.com
+  petergeorgantascomS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: petergeorgantas.com
+  petergeorgantascomS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref petergeorgantascomS3
+      PolicyDocument:
+        Statement: 
+        - 
+          Action: 
+            - "s3:GetObject"
+          Effect: "Allow"
+          Resource: 
+            Fn::Join: 
+              - ""
+              - 
+                - "arn:aws:s3:::"
+                - 
+                  Ref: "petergeorgantascomS3"
+                - "/*"
+          Principal:
+            CanonicalUser: 1b81d33fb41258444d137694ba870321badb3d8cb44c58ba3bef386cab8e2379b76ce90bd8a05f82c9bd509e599c5146
+  petergeorgantascomDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+        - DomainName: !GetAtt [petergeorgantascomS3, DomainName]
+          Id: petergeorgantascomS3Origin
+          S3OriginConfig:
+            OriginAccessIdentity: origin-access-identity/cloudfront/E2Z5QS0HZPP4XG
+        Enabled: 'true'
+        DefaultRootObject: index.html
+        Aliases:
+        - petergeorgantas.com
+        - www.petergeorgantas.com
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: 'true'
+          ForwardedValues:
+            QueryString: 'false'
+          TargetOriginId: petergeorgantascomS3Origin
+          ViewerProtocolPolicy : redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref petergeorgantascomCert
+          MinimumProtocolVersion: TLSv1.1_2016
+          SslSupportMethod: sni-only
+  petergeorgantascomRoute53Apex:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: petergeorgantas.com.
+      Name: petergeorgantas.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt [petergeorgantascomDistribution, DomainName]
+        HostedZoneId: Z2FDTNDATAQYW2 # Always the same for cloudfront
+  petergeorgantascomRoute53WWW:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: petergeorgantas.com.
+      Name: www.petergeorgantas.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt [petergeorgantascomDistribution, DomainName]
+        HostedZoneId: Z2FDTNDATAQYW2 # Always the same for cloudfront
