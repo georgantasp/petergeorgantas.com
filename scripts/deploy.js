@@ -8,7 +8,9 @@ var client = s3.createClient({s3Client: new AWS.S3()});
 
 var prefix = process.env.CODEBUILD_BUILD_ID || 'dev';
 
-async function deployCloudformation() {
+function deployCloudformation() {
+  console.log('updating cloudformation');
+  
   var params = {
     StackName: "petergeorgantascom",
     TemplateBody: fs.readFileSync('template.yml', 'utf8'),
@@ -18,7 +20,7 @@ async function deployCloudformation() {
     }]
   }
 
-  await new Promise((resolve, reject) =>
+  return new Promise((resolve, reject) =>
     cloudformation.updateStack(params, function(err, data) {
       if (err) reject(err);
       else     resolve(data);
@@ -26,7 +28,9 @@ async function deployCloudformation() {
   );
 } 
 
-async function deployS3(){
+function deployS3(){
+  console.log('updating s3');
+  
   var params = {
     localDir: 'public',
     deleteRemoved: true,
@@ -36,7 +40,7 @@ async function deployS3(){
     }
   };
   
-  await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     var uploader = client.uploadDir(params);
     uploader.on('error', function(err) {
       reject(err);
@@ -50,12 +54,4 @@ async function deployS3(){
   });
 }
 
-async function deploy() {
-  console.log('updating cloudformation');
-  await deployCloudformation();
-  
-  console.log('updating s3');
-  await deployS3();
-}
-
-deploy();
+deployCloudformation().then(deployS3);
