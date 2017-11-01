@@ -1,4 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  OriginPath:
+    Type: String
+    Default: dev
+
 Resources:
   petergeorgantascomCert:
     Type: AWS::CertificateManager::Certificate
@@ -40,6 +46,11 @@ Resources:
         Origins:
         - DomainName: !GetAtt [petergeorgantascomS3, DomainName]
           Id: petergeorgantascomS3Origin
+          OriginPath:
+            !Join
+              - ''
+              - - '/'
+                - !Ref OriginPath
           S3OriginConfig:
             OriginAccessIdentity: origin-access-identity/cloudfront/E2Z5QS0HZPP4XG
         Enabled: 'true'

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "node scripts/deploy.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,7 @@
   },
   "homepage": "https://github.com/georgantasp/petergeorgantas.com#readme",
   "devDependencies": {
-    "aws-sdk": "^2.141.0"
+    "aws-sdk": "^2.141.0",
+    "s3": "^4.4.0"
   }
 }
