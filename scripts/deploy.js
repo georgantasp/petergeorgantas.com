@@ -55,4 +55,9 @@ function deployS3(){
   });
 }
 
-deployCloudformation().then(deployS3);
+function handleError(err){
+  console.error(err);
+  process.exit(1);
+}
+
+deployCloudformation().catch(handleError).then(deployS3).catch(handleError);
