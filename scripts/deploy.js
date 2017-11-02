@@ -7,7 +7,7 @@ AWS.config.update({region: 'us-east-1'});
 var cloudformation = new AWS.CloudFormation();
 var client = s3.createClient({s3Client: new AWS.S3()});
 
-var prefix = process.env.CODEBUILD_BUILD_ID || 'dev';
+var originPath = process.env.CODEBUILD_BUILD_ID || 'dev';
 
 function deployCloudformation() {
   console.log('updating cloudformation');
@@ -17,7 +17,7 @@ function deployCloudformation() {
     TemplateBody: fs.readFileSync('template.yml', 'utf8'),
     Parameters: [{
       ParameterKey: 'OriginPath',
-      ParameterValue: prefix
+      ParameterValue: originPath
     }]
   }
 
