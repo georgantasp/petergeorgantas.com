@@ -1,11 +1,11 @@
 var fs = require('fs');
 var AWS = require('aws-sdk');
-var s3 = require('s3');
+var S3 = require('aws-sdk/clients/s3');
 
 AWS.config.update({region: 'us-east-1'});
 
 var cloudformation = new AWS.CloudFormation();
-var client = s3.createClient({s3Client: new AWS.S3()});
+var client = new AWS.S3();
 
 var originPath = process.env.CODEBUILD_BUILD_ID || 'dev';
 
@@ -37,7 +37,7 @@ function deployS3(){
     deleteRemoved: true,
     s3Params: {
       Bucket: 'petergeorgantas.com',
-      Prefix: prefix
+      Prefix: originPath
     }
   };
   
