@@ -6,4 +6,5 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: aws s3 help
+      - run: ls ./public
+      - run: aws s3 sync ./public/ s3://petergeorgantas.com/dev/
