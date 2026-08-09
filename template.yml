@@ -10,35 +10,48 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: petergeorgantas.com
-      DomainValidationOptions:
-      - DomainName: petergeorgantas.com
-        ValidationDomain: petergeorgantas.com
       SubjectAlternativeNames:
-      - www.petergeorgantas.com
+        - "*.petergeorgantas.com"
+        - georgantas.dev
+        - "*.georgantas.dev"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: petergeorgantas.com
+          HostedZoneId: Z9U1P15CH72I3
+        - DomainName: georgantas.dev
+          HostedZoneId: ZO22YLZA59WDO
+
+  petergeorgantascomOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: OAI for petergeorgantas.com S3 origin
+
   petergeorgantascomS3:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: petergeorgantas.com
+
   petergeorgantascomS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
-    Properties: 
+    Properties:
       Bucket: !Ref petergeorgantascomS3
       PolicyDocument:
-        Statement: 
-        - 
-          Action: 
+        Statement:
+        -
+          Action:
             - "s3:GetObject"
           Effect: "Allow"
-          Resource: 
-            Fn::Join: 
+          Resource:
+            Fn::Join:
               - ""
-              - 
+              -
                 - "arn:aws:s3:::"
-                - 
-                  Ref: "petergeorgantascomS3"
+                - Ref: "petergeorgantascomS3"
                 - "/*"
           Principal:
-            CanonicalUser: 1b81d33fb41258444d137694ba870321badb3d8cb44c58ba3bef386cab8e2379b76ce90bd8a05f82c9bd509e599c5146
+            CanonicalUser: !GetAtt [petergeorgantascomOriginAccessIdentity, S3CanonicalUserId]
+
   petergeorgantascomDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -52,26 +65,32 @@ Resources:
               - - '/'
                 - !Ref OriginPath
           S3OriginConfig:
-            OriginAccessIdentity: origin-access-identity/cloudfront/E2Z5QS0HZPP4XG
+            OriginAccessIdentity:
+              !Join
+                - ''
+                - - 'origin-access-identity/cloudfront/'
+                  - !Ref petergeorgantascomOriginAccessIdentity
         Enabled: 'true'
         DefaultRootObject: index.html
         Aliases:
         - petergeorgantas.com
         - www.petergeorgantas.com
+        - georgantas.dev
+        - www.georgantas.dev
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
             - HEAD
           Compress: 'true'
-          ForwardedValues:
-            QueryString: 'false'
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           TargetOriginId: petergeorgantascomS3Origin
           ViewerProtocolPolicy : redirect-to-https
         PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: !Ref petergeorgantascomCert
-          MinimumProtocolVersion: TLSv1.1_2016
+          MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
+
   petergeorgantascomRoute53Apex:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -86,6 +105,24 @@ Resources:
     Properties:
       HostedZoneName: petergeorgantas.com.
       Name: www.petergeorgantas.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt [petergeorgantascomDistribution, DomainName]
+        HostedZoneId: Z2FDTNDATAQYW2 # Always the same for cloudfront
+  georgantasdevRoute53Apex:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: georgantas.dev.
+      Name: georgantas.dev
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt [petergeorgantascomDistribution, DomainName]
+        HostedZoneId: Z2FDTNDATAQYW2 # Always the same for cloudfront
+  georgantasdevRoute53WWW:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: georgantas.dev.
+      Name: www.georgantas.dev
       Type: A
       AliasTarget:
         DNSName: !GetAtt [petergeorgantascomDistribution, DomainName]

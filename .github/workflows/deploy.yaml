@@ -1,19 +1,39 @@
 name: GitHub Actions Deploy
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
 on:
   push:
-    branches: [main]
+    branches: ['**']
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials from Test account
-        uses: aws-actions/configure-aws-credentials@v1
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-deploy
           aws-region: us-east-1
-      - name: Copy files to the bucket with the AWS CLI
+
+      - name: Set dry-run flags
+        id: vars
         run: |
-          aws s3 sync ./public/ s3://petergeorgantas.com/dev/
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "cfn_flags=" >> "$GITHUB_OUTPUT"
+            echo "s3_flags=" >> "$GITHUB_OUTPUT"
+          else
+            echo "cfn_flags=--no-execute-changeset" >> "$GITHUB_OUTPUT"
+            echo "s3_flags=--dryrun" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy CloudFormation template
+        run: |
+          aws cloudformation deploy --template-file template.yml --stack-name petergeorgantascom ${{ steps.vars.outputs.cfn_flags }}
+
+      - name: Sync files to s3 bucket
+        run: |
+          aws s3 sync ./public/ s3://petergeorgantas.com/dev/ ${{ steps.vars.outputs.s3_flags }}
