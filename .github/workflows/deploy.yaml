@@ -32,7 +32,7 @@ jobs:
 
       - name: Deploy CloudFormation template
         run: |
-          aws cloudformation deploy --template-file template.yml --stack-name petergeorgantascom ${{ steps.vars.outputs.cfn_flags }}
+          aws cloudformation deploy --template-file template.yml --stack-name petergeorgantascom ${{ steps.vars.outputs.cfn_flags }} --parameter-overrides OriginPath=${{ github.sha }}
 
       - name: Sync files to s3 bucket
         run: |
