@@ -19,21 +19,15 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-deploy
           aws-region: us-east-1
 
-      - name: Set dry-run flags
-        id: vars
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "cfn_flags=" >> "$GITHUB_OUTPUT"
-            echo "s3_flags=" >> "$GITHUB_OUTPUT"
-          else
-            echo "cfn_flags=--no-execute-changeset" >> "$GITHUB_OUTPUT"
-            echo "s3_flags=--dryrun" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Deploy CloudFormation template
-        run: |
-          aws cloudformation deploy --template-file template.yml --stack-name petergeorgantascom ${{ steps.vars.outputs.cfn_flags }} --parameter-overrides OriginPath=${{ github.sha }}
-
       - name: Sync files to s3 bucket
         run: |
-          aws s3 sync ./public/ s3://petergeorgantas.com/dev/ ${{ steps.vars.outputs.s3_flags }}
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            aws s3 sync ./public/ s3://petergeorgantas.com/
+          else
+            aws s3 sync ./public/ s3://petergeorgantas.com/ --dryrun
+          fi
+
+      - name: Invalidate
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws cloudfront create-invalidation --distribution-id E20EM19DDJ7N35 --paths "/*"

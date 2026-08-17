@@ -1,9 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
-Parameters:
-  OriginPath:
-    Type: String
-    Default: dev
+Outputs:
+  petergeorgantascomCert:
+    Value: !Ref petergeorgantascomCert
+    Export:
+      Name: petergeorgantascomCert
+  petergeorgantascomDistribution:
+    Value: !Ref petergeorgantascomDistribution
+    Export:
+      Name: petergeorgantascomDistribution
 
 Resources:
   petergeorgantascomCert:
@@ -59,11 +64,6 @@ Resources:
         Origins:
         - DomainName: !GetAtt [petergeorgantascomS3, DomainName]
           Id: petergeorgantascomS3Origin
-          OriginPath:
-            !Join
-              - ''
-              - - '/'
-                - !Ref OriginPath
           S3OriginConfig:
             OriginAccessIdentity:
               !Join
